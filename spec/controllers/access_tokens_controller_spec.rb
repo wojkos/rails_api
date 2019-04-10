@@ -2,26 +2,6 @@ require 'rails_helper'
 
 RSpec.describe AccessTokensController, type: :controller do
   describe '#create' do
-    shared_examples_for 'unauthorized_requests' do
-      let(:error) do
-        {
-          'status' => '401',
-          'source' => { 'pointer' => '/code' },
-          'title' =>  'Authentication code is invalid',
-          'detail' => 'You must provide valid code in order to exchange it for token.'
-        }
-      end
-      it 'should return 401 status code' do
-        subject
-        expect(response).to have_http_status(401)
-      end
-
-      it 'should return proper error body' do
-        subject
-        expect(json['errors']).to include(error)
-      end
-    end
-
     context 'when no code provided' do
       subject { post :create }
       it_behaves_like 'unauthorized_requests'
@@ -33,7 +13,53 @@ RSpec.describe AccessTokensController, type: :controller do
     end
 
     context 'when success request' do
+      let(:user_data) { { login: 'jdoe1', name: 'Joe Doe', avatar_url: 'http://example.com/avatar' } }
+      before do
+        allow_any_instance_of(Octokit::Client).to receive(:exchange_code_for_token).and_return('validaccesstoken')
+        allow_any_instance_of(Octokit::Client).to receive(:user).and_return(user_data)
+      end
+      subject { post :create, params: { code: 'valid_code' } }
+      it 'should return 201 status code' do
+        subject
+        expect(response).to have_http_status(201)
+      end
 
+      it 'should return proper json body' do
+        expect{ subject }.to change{ User.count }.by(1)
+        user = User.find_by(login: user_data[:login])
+        expect(json_data['attributes']).to eq(
+          { 'token' => user.access_token.token }
+        )
+      end
+    end
+  end
+
+  describe 'DELETE #destroy' do
+    subject { delete :destroy }
+
+    context 'when no authorization header provider' do
+      it_behaves_like 'forbidden_request'
+    end
+
+    context 'when invalid authorization header provider' do
+      before { request.headers['authorization'] = 'Invalid token' }
+      it_behaves_like 'forbidden_request'
+    end
+
+    context 'when valid request' do
+      let(:user) { create :user }
+      let(:access_token) { user.create_access_token }
+
+      before { request.headers['authorization'] = "Bearer #{access_token.token}" }
+
+      it 'should return 204 status code' do
+        subject
+        expect(response).to have_http_status(:no_content)
+      end
+
+      it 'should reoce the proper access token' do
+        expect{ subject }.to change{ AccessToken.count}.by(-1)
+      end
     end
   end
 end
