@@ -1,5 +1,6 @@
 class ApplicationController < ActionController::API
   class AuthorizationError < StandardError; end
+  class ErrorSerializer < ActiveModel::Serializer::ErrorSerializer ; end
 
   rescue_from UserAuthenticator::AuthenticationError, with: :authentication_error
   rescue_from AuthorizationError, with: :authorization_error
