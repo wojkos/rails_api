@@ -13,15 +13,15 @@ describe ArticlesController do
       create_list :article, 2
       subject
       Article.recent.each_with_index do |article, index|
-        expect(json_data[index]['attributes']).to eq(
-          'title' => article.title,
-          'content' => article.content,
-          'slug' => article.slug
-        )
+        expect(json_data[index]['attributes']).to eq({
+          "title" => article.title,
+          "content" => article.content,
+          "slug" => article.slug
+        })
       end
     end
 
-    it 'should return articles in proper order' do
+    it 'should return articles in the proper order' do
       old_article = create :article
       newer_article = create :article
       subject
@@ -30,9 +30,9 @@ describe ArticlesController do
     end
 
     it 'should paginate results' do
-      create_list :article, 5
+      create_list :article, 3
       get :index, params: { page: 2, per_page: 1 }
-      expect(json_data.length).to eq(1)
+      expect(json_data.length).to eq 1
       expected_article = Article.recent.second.id.to_s
       expect(json_data.first['id']).to eq(expected_article)
     end
@@ -49,24 +49,24 @@ describe ArticlesController do
 
     it 'should return proper json' do
       subject
-      expect(json_data['attributes']).to eq(
-        'title' => article.title,
-        'content' => article.content,
-        'slug' => article.slug
-      )
+      expect(json_data['attributes']).to eq({
+          "title" => article.title,
+          "content" => article.content,
+          "slug" => article.slug
+      })
     end
   end
 
   describe '#create' do
-    subject { post 'create' }
+    subject { post :create }
 
     context 'when no code provided' do
-      it_behaves_like 'forbidden_request'
+      it_behaves_like 'forbidden_requests'
     end
 
     context 'when invalid code provided' do
       before { request.headers['authorization'] = 'Invalid token' }
-      it_behaves_like 'forbidden_request'
+      it_behaves_like 'forbidden_requests'
     end
 
     context 'when authorized' do
@@ -74,7 +74,6 @@ describe ArticlesController do
       before { request.headers['authorization'] = "Bearer #{access_token.token}" }
 
       context 'when invalid parameters provided' do
-        subject { post :create, params: invalid_attributes }
         let(:invalid_attributes) do
           {
             data: {
@@ -85,6 +84,9 @@ describe ArticlesController do
             }
           }
         end
+
+        subject { post :create, params: invalid_attributes }
+
         it 'should return 422 status code' do
           subject
           expect(response).to have_http_status(:unprocessable_entity)
@@ -94,29 +96,32 @@ describe ArticlesController do
           subject
           expect(json['errors']).to include(
             {
-              'source' => {'pointer' => '/data/attributes/title'},
-              'detail' => 'can\'t be blank'
+              "source" => { "pointer" => "/data/attributes/title" },
+              "detail" =>  "can't be blank"
             },
             {
-              'source' => {'pointer' => '/data/attributes/content'},
-              'detail' => 'can\'t be blank'
+              "source" => { "pointer" => "/data/attributes/content" },
+              "detail" =>  "can't be blank"
             },
             {
-              'source' => {'pointer' => '/data/attributes/slug'},
-              'detail' => 'can\'t be blank'
+              "source" => { "pointer" => "/data/attributes/slug" },
+              "detail" =>  "can't be blank"
             }
           )
         end
       end
 
       context 'when success request sent' do
+        let(:access_token) { create :access_token }
+        before { request.headers['authorization'] = "Bearer #{access_token.token}" }
+
         let(:valid_attributes) do
           {
             'data' => {
               'attributes' => {
-                'title' => 'Awesome title',
-                'content' => 'my content',
-                'slug' => 'awesome-title'
+                'title' => 'Awesome article',
+                'content' => 'Super content',
+                'slug' => 'awesome-article'
               }
             }
           }
@@ -131,30 +136,45 @@ describe ArticlesController do
 
         it 'should have proper json body' do
           subject
-          expect(json_data['attributes']).to include(valid_attributes['data']['attributes'])
+          expect(json_data['attributes']).to include(
+            valid_attributes['data']['attributes']
+          )
         end
 
         it 'should create the article' do
-          expect{subject}.to change{ Article.count }.by(1)
+          expect{ subject }.to change{ Article.count }.by(1)
         end
       end
     end
   end
 
   describe '#update' do
-    let!(:article) { create :article }
+    let(:user) { create :user }
+    let(:article) { create :article, user: user }
+    let(:access_token) { user.create_access_token }
+
     subject { patch :update, params: { id: article.id } }
+
     context 'when no code provided' do
-      it_behaves_like 'forbidden_request'
+      it_behaves_like 'forbidden_requests'
     end
 
     context 'when invalid code provided' do
       before { request.headers['authorization'] = 'Invalid token' }
-      it_behaves_like 'forbidden_request'
+      it_behaves_like 'forbidden_requests'
+    end
+
+    context 'when trying to update not owned article' do
+      let(:other_user) { create :user }
+      let(:other_article) { create :article, user: other_user }
+
+      subject { patch :update, params: { id: other_article.id } }
+      before { request.headers['authorization'] = "Bearer #{access_token.token}" }
+
+      it_behaves_like 'forbidden_requests'
     end
 
     context 'when authorized' do
-      let(:access_token) { create :access_token }
       before { request.headers['authorization'] = "Bearer #{access_token.token}" }
 
       context 'when invalid parameters provided' do
@@ -172,6 +192,7 @@ describe ArticlesController do
         subject do
           patch :update, params: invalid_attributes.merge(id: article.id)
         end
+
         it 'should return 422 status code' do
           subject
           expect(response).to have_http_status(:unprocessable_entity)
@@ -181,25 +202,27 @@ describe ArticlesController do
           subject
           expect(json['errors']).to include(
             {
-              'source' => {'pointer' => '/data/attributes/title'},
-              'detail' => 'can\'t be blank'
+              "source" => { "pointer" => "/data/attributes/title" },
+              "detail" =>  "can't be blank"
             },
             {
-              'source' => {'pointer' => '/data/attributes/content'},
-              'detail' => 'can\'t be blank'
+              "source" => { "pointer" => "/data/attributes/content" },
+              "detail" =>  "can't be blank"
             }
           )
         end
       end
 
       context 'when success request sent' do
+        before { request.headers['authorization'] = "Bearer #{access_token.token}" }
+
         let(:valid_attributes) do
           {
             'data' => {
               'attributes' => {
-                'title' => 'Awesome title',
-                'content' => 'my content',
-                'slug' => 'awesome-title'
+                'title' => 'Awesome article',
+                'content' => 'Super content',
+                'slug' => 'awesome-article'
               }
             }
           }
@@ -209,28 +232,23 @@ describe ArticlesController do
           patch :update, params: valid_attributes.merge(id: article.id)
         end
 
-        it 'should have 201 status code' do
+        it 'should have 200 status code' do
           subject
           expect(response).to have_http_status(:ok)
         end
 
         it 'should have proper json body' do
           subject
-          expect(json_data['attributes']).to include(valid_attributes['data']['attributes'])
+          expect(json_data['attributes']).to include(
+            valid_attributes['data']['attributes']
+          )
         end
 
-        it 'should update the article title' do
+        it 'should update the article' do
           subject
-          expect(article.reload.title).to eq(valid_attributes['data']['attributes']['title'])
-        end
-
-        it 'should update the article content' do
-          subject
-          expect(article.reload.content).to eq(valid_attributes['data']['attributes']['content'])
-        end
-
-        it 'should\'t create new article' do
-          expect{subject}.not_to change{ Article.count }
+          expect(article.reload.title).to eq(
+            valid_attributes['data']['attributes']['title']
+          )
         end
       end
     end

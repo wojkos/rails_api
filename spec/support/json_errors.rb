@@ -20,7 +20,7 @@ shared_examples_for 'unauthorized_requests' do
   end
 end
 
-shared_examples_for 'forbidden_request' do
+shared_examples_for 'forbidden_requests' do
   let(:authorization_error) do
     {
       'status' => '403',
