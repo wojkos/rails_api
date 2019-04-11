@@ -10,6 +10,7 @@ gem 'puma', '~> 3.11'
 gem 'active_model_serializers'
 gem 'kaminari'
 gem "octokit", "~> 4.0"
+gem 'faker'
 
 group :development, :test do
   gem 'byebug', platforms: [:mri, :mingw, :x64_mingw]
