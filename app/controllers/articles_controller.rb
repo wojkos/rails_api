@@ -23,18 +23,30 @@ class ArticlesController < ApplicationController
   end
 
   def update
-    article = current_user.articles.find(params[:id])
-    article.update_attributes!(article_params)
-    render json: article, status: :ok
+    set_user_article
+    @article.update_attributes!(article_params)
+    render json: @article, status: :ok
   rescue ActiveRecord::RecordNotFound
     authorization_error
   rescue
-    render json: article, adapter: :json_api,
+    render json: @article, adapter: :json_api,
       serializer: ErrorSerializer,
       status: :unprocessable_entity
   end
 
+  def destroy
+    set_user_article
+    @article.destroy
+    head :no_content
+  rescue
+    authorization_error
+  end
+
   private
+
+  def set_user_article
+    @article = current_user.articles.find(params[:id])
+  end
 
   def article_params
     params.require(:data).require(:attributes).
