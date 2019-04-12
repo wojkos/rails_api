@@ -6,11 +6,9 @@ RSpec.describe AccessToken, type: :model do
       expect(build :access_token).to be_valid
     end
 
-    it 'should validate token presence' do
-      expect(build :access_token, token: '').to be_invalid
-    end
-    it 'should validate token uniqueness' do
+    it 'should validate token' do
       access_token = create :access_token
+      expect(build :access_token, token: '').to be_invalid
       expect(build :access_token, token: access_token.token).to be_invalid
     end
   end

@@ -1,29 +1,31 @@
 require 'rails_helper'
 
 RSpec.describe User, type: :model do
-  describe '#validations' do
-    it 'should test that factory is valid' do
-      expect(build(:user)).to be_valid
+  describe "#validations" do
+    it 'should have valid factory' do
+      user = build :user
+      expect(user).to be_valid
     end
 
-    it 'should validate the presence of login' do
-      user = build :user, login: nil
+    it 'should validate presence of attributes' do
+      user = build :user, login: nil, provider: nil
       expect(user).not_to be_valid
-      expect(user.errors.messages[:login]).to include('can\'t be blank')
+      expect(user.errors.messages[:login]).to include("can't be blank")
+      expect(user.errors.messages[:provider]).to include("can't be blank")
     end
 
-    it 'should validate the presence of provider' do
-      user = build :user, provider: nil
+    it 'should validate presence of password for standard provider' do
+      user = build :user, login: 'jsmith', provider: 'standard', password: nil
       expect(user).not_to be_valid
-      expect(user.errors.messages[:provider]).to include('can\'t be blank')
+      expect(user.errors.messages[:password]).to include("can't be blank")
     end
 
-    it 'login should be uniqe' do
+    it 'should validate uniqueness of login' do
       user = create :user
-      new_user = build :user, login: user.login
-      expect(new_user).not_to be_valid
-      new_user.login = 'new_login'
-      expect(new_user).to be_valid
+      other_user = build :user, login: user.login
+      expect(other_user).not_to be_valid
+      other_user.login = 'newlogin'
+      expect(other_user).to be_valid
     end
   end
 end

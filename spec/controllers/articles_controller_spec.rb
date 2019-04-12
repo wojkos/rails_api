@@ -14,9 +14,9 @@ describe ArticlesController do
       subject
       Article.recent.each_with_index do |article, index|
         expect(json_data[index]['attributes']).to eq({
-          "title" => article.title,
-          "content" => article.content,
-          "slug" => article.slug
+          'title' => article.title,
+          'content' => article.content,
+          'slug' => article.slug
         })
       end
     end
@@ -50,9 +50,9 @@ describe ArticlesController do
     it 'should return proper json' do
       subject
       expect(json_data['attributes']).to eq({
-          "title" => article.title,
-          "content" => article.content,
-          "slug" => article.slug
+          'title' => article.title,
+          'content' => article.content,
+          'slug' => article.slug
       })
     end
   end
@@ -96,16 +96,16 @@ describe ArticlesController do
           subject
           expect(json['errors']).to include(
             {
-              "source" => { "pointer" => "/data/attributes/title" },
-              "detail" =>  "can't be blank"
+              'source' => { 'pointer' => '/data/attributes/title' },
+              'detail' =>  'can\'t be blank'
             },
             {
-              "source" => { "pointer" => "/data/attributes/content" },
-              "detail" =>  "can't be blank"
+              'source' => { 'pointer' => '/data/attributes/content' },
+              'detail' =>  'can\'t be blank'
             },
             {
-              "source" => { "pointer" => "/data/attributes/slug" },
-              "detail" =>  "can't be blank"
+              'source' => { 'pointer' => '/data/attributes/slug' },
+              'detail' =>  'can\'t be blank'
             }
           )
         end
@@ -202,12 +202,12 @@ describe ArticlesController do
           subject
           expect(json['errors']).to include(
             {
-              "source" => { "pointer" => "/data/attributes/title" },
-              "detail" =>  "can't be blank"
+              'source' => { 'pointer' => '/data/attributes/title' },
+              'detail' =>  'can\'t be blank'
             },
             {
-              "source" => { "pointer" => "/data/attributes/content" },
-              "detail" =>  "can't be blank"
+              'source' => { 'pointer' => '/data/attributes/content' },
+              'detail' =>  'can\'t be blank'
             }
           )
         end
@@ -256,7 +256,7 @@ describe ArticlesController do
 
   describe '#destroy' do
     let(:user) { create :user }
-    let(:article) { create :article, user: user}
+    let(:article) { create :article, user: user }
     let(:access_token) { user.create_access_token }
 
     subject { delete :destroy, params: { id: article.id } }
@@ -266,7 +266,7 @@ describe ArticlesController do
     end
 
     context 'when invalid code provided' do
-      before {request.headers['authorization'] = 'Invalid token' }
+      before { request.headers['authorization'] = 'Invalid token' }
       it_behaves_like 'forbidden_requests'
     end
 
@@ -274,16 +274,24 @@ describe ArticlesController do
       let(:other_user) { create :user }
       let(:other_article) { create :article, user: other_user }
 
-      subject { delete :destroy, params: {id: other_article.id } }
+      subject { delete :destroy, params: { id: other_article.id } }
+      before do
+        request.headers['authorization'] = "Bearer #{access_token.token}"
+      end
 
-      before {request.headers['authorization'] = "Bearer #{access_token.token}" }
       it_behaves_like 'forbidden_requests'
     end
 
     context 'when authorized' do
-      before {request.headers['authorization'] = "Bearer #{access_token.token}" }
+      before do
+        request.headers['authorization'] = "Bearer #{access_token.token}"
+      end
 
-      context 'when succes request sent' do
+      context 'when success request sent' do
+        before do
+          request.headers['authorization'] = "Bearer #{access_token.token}"
+        end
+
         it 'should have 204 status code' do
           subject
           expect(response).to have_http_status(:no_content)
@@ -296,7 +304,7 @@ describe ArticlesController do
 
         it 'should destroy the article' do
           article
-          expect{ subject }.to change{ user.articles.count }.by(-1)
+          expect { subject }.to change { user.articles.count }.by(-1)
         end
       end
     end

@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe Comment, type: :model do
   describe '#validations' do
-    it 'should have valid factor' do
+    it 'should have valid factory' do
       expect(build :comment).to be_valid
     end
 
@@ -12,13 +12,13 @@ RSpec.describe Comment, type: :model do
       expect(comment.errors.messages).to include({
         user: ['must exist'],
         article: ['must exist'],
-        content: ['can\'t be blank']
+        content: ["can't be blank"]
       })
     end
   end
 
   describe '.recent' do
-    let(:article) { create :article}
+    let(:article) { create :article }
     let!(:old_comment) { create :comment, article: article }
     let!(:newer_comment) { create :comment, article: article }
 

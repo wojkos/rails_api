@@ -1,9 +1,11 @@
 class CommentsController < ApplicationController
   skip_before_action :authorize!, only: [:index]
-  before_action :load_article, only: [:create, :index]
+  before_action :load_article
 
   def index
-    comments = @article.comments.recent.page(params[:page]).per(params[:per_page])
+    comments = @article.comments
+                       .page(current_page)
+                       .per(per_page)
     render json: comments
   end
 
@@ -14,22 +16,21 @@ class CommentsController < ApplicationController
 
     @comment.save!
     render json: @comment, status: :created, location: @article
-  rescue
+  rescue StandardError
     render json: @comment, adapter: :json_api,
-      serializer: ErrorSerializer,
-      status: :unprocessable_entity
+           serializer: ErrorSerializer,
+           status: :unprocessable_entity
   end
 
-
   private
-  
+
   def load_article
     @article = Article.find(params[:article_id])
   end
 
   def comment_params
-    params.require(:data).require(:attributes).
-      permit(:content) ||
+    params.require(:data).require(:attributes)
+          .permit(:content) ||
       ActionController::Parameters.new
   end
 end
